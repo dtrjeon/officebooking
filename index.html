@@ -813,6 +813,10 @@ function updateRangeDisplay() {
 function clearModalSel() {
   modalTempSel = {};
   document.querySelectorAll(".time-slot-btn.selected").forEach(b=>b.classList.remove("selected"));
+  // 입력창이 떠 있으면 닫고 슬롯 화면으로 복귀
+  document.getElementById("modalUserInputArea").style.display = "none";
+  document.getElementById("modalSlotArea").style.display = "block";
+  document.getElementById("modalConfirmBtn").style.display = "";
   updateRangeDisplay();
 }
 
