@@ -176,6 +176,7 @@
       </div>
       <input type="text" id="deptDirectInput" placeholder="예: 12조" maxlength="10"
         autocomplete="off" spellcheck="false"
+        onblur="normalizeDeptDirect(this)" onkeydown="if(event.key==='Enter'){normalizeDeptDirect(this);this.blur();}"
         style="display:none; margin-top:6px; width:100%; padding:11px 12px; border:1.5px solid var(--border); border-radius:var(--radius); font-size:16px; font-family:var(--font); color:var(--ink); outline:none; -webkit-appearance:none;"/>
     </div>
   </div>
@@ -277,6 +278,7 @@
             </div>
             <input type="text" id="modalDeptDirectInput" placeholder="예: 12조" maxlength="10"
               autocomplete="off" spellcheck="false"
+              onblur="normalizeDeptDirect(this)" onkeydown="if(event.key==='Enter'){normalizeDeptDirect(this);this.blur();}"
               style="display:none; margin-top:4px; width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:15px; font-family:var(--font); outline:none; -webkit-appearance:none;"/>
           </div>
         </div>
@@ -457,6 +459,15 @@ const sel = {};
 let sheetData = {};
 let modalCellKey = null, modalHourObj = null, modalTempSel = {};
 let activeWeekFilter = "all";
+
+// 직접입력 시 숫자만 입력하면 "조" 자동 추가 (예: "12" → "12조")
+function normalizeDeptDirect(input) {
+  let v = input.value.trim();
+  if (!v) return;
+  // 숫자만 있으면 "조" 붙이기
+  if (/^\d+$/.test(v)) v = v + "조";
+  input.value = v;
+}
 
 // 조 직접입력 토글
 function handleDeptChange(val) {
