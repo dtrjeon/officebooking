@@ -251,7 +251,7 @@
 const SERVER_CONFIG = {
   /* Google Apps Script 웹앱 URL을 붙여넣으세요
      예: "https://script.google.com/macros/s/AKfyc.../exec" */
-  GAS_URL: "https://script.google.com/macros/s/AKfycbx0TTFDcTAKUaqZVTxeUAqwOiYn1vNPdtmr0BOgsCwaPXxw5V6sVdrndYP8aRwwNPYY/exec",
+  GAS_URL: "https://script.google.com/macros/s/AKfycbys4LJpn6RuyQO1ZjIN5EAOk9WGJEK5IXHKbtBcPl4O2lWOSb2CdPWHzB9fJrSVtbph/exec",
 
   /* 폴링 주기 (ms) — 0이면 자동 새로고침 없음 */
   POLL_INTERVAL: 30000,
@@ -294,10 +294,12 @@ const API = {
   },
 
   async submit(name, dept, selections) {
+    const ua = navigator.userAgent;
+    const deviceType = /iPhone|iPad|iPod/.test(ua) ? "iPhone" : /Android/.test(ua) ? "Android" : "기타";
     const res = await fetch(this._url(), {
       method: "POST",
       headers: { "Content-Type": "text/plain" }, // GAS CORS 우회
-      body: JSON.stringify({ action:"submit", name, dept, selections }),
+      body: JSON.stringify({ action:"submit", name, dept, selections, deviceType }),
     });
     if (!res.ok) throw new Error("서버 응답 오류: " + res.status);
     const json = await res.json();
