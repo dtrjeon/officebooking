@@ -227,13 +227,43 @@
       <div class="modal-subtitle">30분 단위 복수 선택 가능</div>
     </div>
     <div class="modal-body">
-      <div class="modal-section-label" id="slotLabel"></div>
-      <div class="time-slot-grid" id="slotGrid"></div>
-      <div class="selected-range-display" id="rangeDisplay">선택된 시간이 없습니다</div>
+      <!-- 이름/조 입력 영역 (미입력 시 노출) -->
+      <div id="modalUserInputArea" style="display:none; margin-bottom:14px; padding:12px 14px; background:var(--accent-pale); border:1.5px solid var(--accent-border); border-radius:var(--radius);">
+        <div style="font-size:12px; font-weight:600; color:var(--accent); margin-bottom:10px; letter-spacing:.04em;">예약자 정보를 입력해 주세요</div>
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+            <label style="font-size:12px; color:var(--muted); font-weight:500;">이름 <span style="color:#c0392b">*</span></label>
+            <input type="text" id="modalNameInput" placeholder="성함" maxlength="20"
+              autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"
+              style="width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:16px; font-family:var(--font); outline:none; -webkit-appearance:none;"/>
+          </div>
+          <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+            <label style="font-size:12px; color:var(--muted); font-weight:500;">조 <span style="color:#c0392b">*</span></label>
+            <div style="position:relative;">
+              <select id="modalDeptInput"
+                style="width:100%; padding:10px 32px 10px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:16px; font-family:var(--font); background:white; color:var(--ink); outline:none; -webkit-appearance:none; appearance:none;">
+                <option value="">-- 선택 --</option>
+                <option>1조</option><option>2조</option><option>3조</option>
+                <option>4조</option><option>5조</option><option>6조</option>
+                <option>7조</option><option>8조</option><option>9조</option>
+                <option>10조</option><option>11조</option>
+              </select>
+              <span style="position:absolute; right:10px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none;">▾</span>
+            </div>
+          </div>
+        </div>
+        <button onclick="applyModalUserInput()" style="width:100%; margin-top:10px; padding:10px; border-radius:8px; border:none; background:var(--accent); color:white; font-size:14px; font-weight:600; font-family:var(--font); cursor:pointer; min-height:42px;">확인</button>
+      </div>
+      <!-- 시간 선택 영역 -->
+      <div id="modalSlotArea">
+        <div class="modal-section-label" id="slotLabel"></div>
+        <div class="time-slot-grid" id="slotGrid"></div>
+        <div class="selected-range-display" id="rangeDisplay">선택된 시간이 없습니다</div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="modal-btn modal-btn-clear" onclick="clearModalSel()">선택 취소</button>
-      <button class="modal-btn modal-btn-confirm" onclick="confirmModal()">확인</button>
+      <button class="modal-btn modal-btn-confirm" id="modalConfirmBtn" onclick="confirmModal()">확인</button>
     </div>
   </div>
 </div>
@@ -550,8 +580,10 @@ function buildSchedule() {
           Object.entries(bookerMap).forEach(([name, info]) => {
             const row = document.createElement("div");
             row.className = "slot-booker-row";
-            row.textContent = name;  // 이름만 표시 (조는 공간 부족으로 생략)
-            if (info.jo) row.title = name + " (" + info.jo + ")";  // 마우스 오버 시 조 표시
+            // 조 숫자만 추출 (예: "10조" → "10")
+            const joNum = info.jo ? info.jo.replace(/[^0-9]/g, "") : "";
+            const joStr = joNum ? "/" + joNum : "";
+            row.textContent = name + joStr;  // 예: 전태룡/10
             inner.appendChild(row);
           });
         } else if (hasMyData) {
@@ -591,22 +623,9 @@ function openModal(dateObj, hourObj, cellKey) {
     return;
   }
 
-  /* ── 성함 / 조 사전 검증 ── */
-  const name = document.getElementById("nameInput").value.trim();
-  const dept = document.getElementById("deptInput").value;
-  if (!name) {
-    document.getElementById("nameInput").classList.add("error");
-    document.getElementById("nameInput").focus();
-    showToast("먼저 성함을 입력해 주세요 ✏️", "error");
-    return;
-  }
-  document.getElementById("nameInput").classList.remove("error");
-  if (!dept) {
-    document.getElementById("deptInput").classList.add("error");
-    showToast("먼저 조를 선택해 주세요 ✏️", "error");
-    return;
-  }
-  document.getElementById("deptInput").classList.remove("error");
+  /* ── 이름/조를 상단 입력란에서 가져오거나, 팝업 내 입력란 노출 ── */
+  let name = document.getElementById("nameInput").value.trim();
+  let dept = document.getElementById("deptInput").value;
 
   modalCellKey = cellKey;
   modalHourObj = hourObj;
@@ -653,7 +672,9 @@ function openModal(dateObj, hourObj, cellKey) {
       // 타인 예약 — 잠금
       btn.className = "time-slot-btn booked";
       btn.disabled  = true;
-      btn.textContent = slot.label + "\n" + bookers[0].name;
+      const b0 = bookers[0];
+      const joStr = b0.jo ? "/" + b0.jo : "";
+      btn.textContent = slot.label + "\n" + b0.name + joStr;
     } else if (isMine) {
       // 본인 예약 — 수정/삭제 가능 (토글)
       btn.className = "time-slot-btn mine" + (isSel ? " selected" : "");
@@ -682,8 +703,98 @@ function openModal(dateObj, hourObj, cellKey) {
   });
 
   updateRangeDisplay();
+
+  // 이름/조 없으면 팝업 내 입력란 표시, 있으면 바로 슬롯 표시
+  const hasUser = !!(name && dept);
+  document.getElementById("modalUserInputArea").style.display = hasUser ? "none" : "block";
+  document.getElementById("modalSlotArea").style.display = hasUser ? "block" : "none";
+  document.getElementById("modalConfirmBtn").style.display = hasUser ? "" : "none";
+  if (!hasUser) {
+    document.getElementById("modalNameInput").value = name;
+    document.getElementById("modalDeptInput").value = dept;
+    setTimeout(() => document.getElementById("modalNameInput").focus(), 150);
+  }
+
   document.getElementById("modalBackdrop").classList.add("show");
   document.body.style.overflow = "hidden";
+}
+
+function applyModalUserInput() {
+  const name = document.getElementById("modalNameInput").value.trim();
+  const dept = document.getElementById("modalDeptInput").value;
+  if (!name) {
+    document.getElementById("modalNameInput").style.borderColor = "#c0392b";
+    document.getElementById("modalNameInput").focus();
+    return;
+  }
+  document.getElementById("modalNameInput").style.borderColor = "";
+  if (!dept) {
+    document.getElementById("modalDeptInput").style.borderColor = "#c0392b";
+    return;
+  }
+  document.getElementById("modalDeptInput").style.borderColor = "";
+
+  // 상단 입력란에도 반영
+  document.getElementById("nameInput").value = name;
+  document.getElementById("deptInput").value = dept;
+
+  // 슬롯 영역 이름 기준으로 내 예약 반영
+  const dateKey0 = modalCellKey.split("_")[0];
+  makeSlots(modalHourObj.start, modalHourObj.end).forEach(slot => {
+    const bKey = dateKey0 + "_" + slot.key;
+    const bookers = sheetData[bKey] || [];
+    if (bookers.some(b => b.name === name) && !Object.prototype.hasOwnProperty.call(modalTempSel, slot.key)) {
+      modalTempSel[slot.key] = true;
+    }
+  });
+
+  const grid = document.getElementById("slotGrid");
+  grid.innerHTML = "";
+  makeSlots(modalHourObj.start, modalHourObj.end).forEach(slot => {
+    const btn = document.createElement("button");
+    const bKey = dateKey0 + "_" + slot.key;
+    const bookers = sheetData[bKey] || [];
+    const isMine  = bookers.some(b => b.name === name);
+    const isOther = bookers.length > 0 && !isMine;
+    const isSel   = !!modalTempSel[slot.key];
+    const slotHour = parseInt(slot.key.slice(0,2), 10);
+    const dateObj2 = (() => { for (const w of WEEKS) for (const d of w.dates) if (d.key === dateKey0) return d; return {}; })();
+    const isSundayPMBlocked = dateObj2.type === "sunday" && modalHourObj.key === "pm" && slotHour >= 14;
+    if (isSundayPMBlocked) {
+      btn.className = "time-slot-btn booked"; btn.disabled = true;
+      btn.textContent = slot.label + "\n예약불가";
+      grid.appendChild(btn); return;
+    }
+    if (isOther) {
+      btn.className = "time-slot-btn booked"; btn.disabled = true;
+      const b0 = bookers[0];
+      btn.textContent = slot.label + "\n" + b0.name + (b0.jo ? "/" + b0.jo : "");
+    } else if (isMine) {
+      btn.className = "time-slot-btn mine" + (isSel ? " selected" : "");
+      btn.textContent = slot.label + "\n✔ 내예약";
+      if (!Object.prototype.hasOwnProperty.call(modalTempSel, slot.key)) modalTempSel[slot.key] = true;
+      btn.addEventListener("click", () => {
+        modalTempSel[slot.key] = !modalTempSel[slot.key];
+        btn.classList.toggle("selected", !!modalTempSel[slot.key]);
+        btn.textContent = slot.label + (modalTempSel[slot.key] ? "\n✔ 내예약" : "\n삭제됨");
+        updateRangeDisplay();
+      });
+    } else {
+      btn.className = "time-slot-btn" + (isSel ? " selected" : "");
+      btn.textContent = slot.label;
+      btn.addEventListener("click", () => {
+        modalTempSel[slot.key] = !modalTempSel[slot.key];
+        btn.classList.toggle("selected", !!modalTempSel[slot.key]);
+        updateRangeDisplay();
+      });
+    }
+    grid.appendChild(btn);
+  });
+
+  document.getElementById("modalUserInputArea").style.display = "none";
+  document.getElementById("modalSlotArea").style.display = "block";
+  document.getElementById("modalConfirmBtn").style.display = "";
+  updateRangeDisplay();
 }
 
 function updateRangeDisplay() {
