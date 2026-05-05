@@ -151,19 +151,32 @@
   <div class="input-row">
     <div class="input-group">
       <label>예약자명 <span style="color:#c0392b">*</span></label>
-      <input type="text" id="nameInput" placeholder="성함" maxlength="20" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"/>
+      <input type="text" id="nameInput" placeholder="이름" maxlength="20" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"/>
+    </div>
+    <div class="input-group">
+      <label>반 <span style="color:#c0392b">*</span></label>
+      <div class="select-wrap">
+        <select id="banInput">
+          <option value="수주반" selected>수주반</option>
+          <option value="화요반">화요반</option>
+        </select>
+      </div>
     </div>
     <div class="input-group">
       <label>조 <span style="color:#c0392b">*</span></label>
-      <div class="select-wrap">
-        <select id="deptInput">
+      <div class="select-wrap" id="deptSelectWrap">
+        <select id="deptInput" onchange="handleDeptChange(this.value)">
           <option value="">-- 선택 --</option>
           <option>1조</option><option>2조</option><option>3조</option>
           <option>4조</option><option>5조</option><option>6조</option>
           <option>7조</option><option>8조</option><option>9조</option>
           <option>10조</option><option>11조</option>
+          <option value="__direct__">직접 입력...</option>
         </select>
       </div>
+      <input type="text" id="deptDirectInput" placeholder="예: 12조" maxlength="10"
+        autocomplete="off" spellcheck="false"
+        style="display:none; margin-top:6px; width:100%; padding:11px 12px; border:1.5px solid var(--border); border-radius:var(--radius); font-size:16px; font-family:var(--font); color:var(--ink); outline:none; -webkit-appearance:none;"/>
     </div>
   </div>
   <div class="load-row">
@@ -230,26 +243,41 @@
       <!-- 이름/조 입력 영역 (미입력 시 노출) -->
       <div id="modalUserInputArea" style="display:none; margin-bottom:14px; padding:12px 14px; background:var(--accent-pale); border:1.5px solid var(--accent-border); border-radius:var(--radius);">
         <div style="font-size:12px; font-weight:600; color:var(--accent); margin-bottom:10px; letter-spacing:.04em;">예약자 정보를 입력해 주세요</div>
-        <div style="display:flex; gap:10px;">
-          <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:100px; display:flex; flex-direction:column; gap:4px;">
             <label style="font-size:12px; color:var(--muted); font-weight:500;">이름 <span style="color:#c0392b">*</span></label>
-            <input type="text" id="modalNameInput" placeholder="성함" maxlength="20"
+            <input type="text" id="modalNameInput" placeholder="이름" maxlength="20"
               autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"
               style="width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:16px; font-family:var(--font); outline:none; -webkit-appearance:none;"/>
           </div>
-          <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+          <div style="flex:1; min-width:80px; display:flex; flex-direction:column; gap:4px;">
+            <label style="font-size:12px; color:var(--muted); font-weight:500;">반 <span style="color:#c0392b">*</span></label>
+            <div style="position:relative;">
+              <select id="modalBanInput"
+                style="width:100%; padding:10px 28px 10px 10px; border:1.5px solid var(--border); border-radius:8px; font-size:15px; font-family:var(--font); background:white; color:var(--ink); outline:none; -webkit-appearance:none; appearance:none;">
+                <option value="수주반" selected>수주반</option>
+                <option value="화요반">화요반</option>
+              </select>
+              <span style="position:absolute; right:8px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none;">▾</span>
+            </div>
+          </div>
+          <div style="flex:1; min-width:80px; display:flex; flex-direction:column; gap:4px;">
             <label style="font-size:12px; color:var(--muted); font-weight:500;">조 <span style="color:#c0392b">*</span></label>
             <div style="position:relative;">
-              <select id="modalDeptInput"
-                style="width:100%; padding:10px 32px 10px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:16px; font-family:var(--font); background:white; color:var(--ink); outline:none; -webkit-appearance:none; appearance:none;">
+              <select id="modalDeptInput" onchange="handleModalDeptChange(this.value)"
+                style="width:100%; padding:10px 28px 10px 10px; border:1.5px solid var(--border); border-radius:8px; font-size:15px; font-family:var(--font); background:white; color:var(--ink); outline:none; -webkit-appearance:none; appearance:none;">
                 <option value="">-- 선택 --</option>
                 <option>1조</option><option>2조</option><option>3조</option>
                 <option>4조</option><option>5조</option><option>6조</option>
                 <option>7조</option><option>8조</option><option>9조</option>
                 <option>10조</option><option>11조</option>
+                <option value="__direct__">직접 입력...</option>
               </select>
-              <span style="position:absolute; right:10px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none;">▾</span>
+              <span style="position:absolute; right:8px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none;">▾</span>
             </div>
+            <input type="text" id="modalDeptDirectInput" placeholder="예: 12조" maxlength="10"
+              autocomplete="off" spellcheck="false"
+              style="display:none; margin-top:4px; width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:15px; font-family:var(--font); outline:none; -webkit-appearance:none;"/>
           </div>
         </div>
         <button onclick="applyModalUserInput()" style="width:100%; margin-top:10px; padding:10px; border-radius:8px; border:none; background:var(--accent); color:white; font-size:14px; font-weight:600; font-family:var(--font); cursor:pointer; min-height:42px;">확인</button>
@@ -429,6 +457,47 @@ const sel = {};
 let sheetData = {};
 let modalCellKey = null, modalHourObj = null, modalTempSel = {};
 let activeWeekFilter = "all";
+
+// 조 직접입력 토글
+function handleDeptChange(val) {
+  const direct = document.getElementById("deptDirectInput");
+  if (val === "__direct__") {
+    direct.style.display = "block";
+    direct.focus();
+  } else {
+    direct.style.display = "none";
+  }
+}
+
+// 팝업 내 조 직접입력 토글
+function handleModalDeptChange(val) {
+  const direct = document.getElementById("modalDeptDirectInput");
+  if (val === "__direct__") {
+    direct.style.display = "block";
+    direct.focus();
+  } else {
+    direct.style.display = "none";
+  }
+}
+
+// 팝업 내 조 값 반환 (직접입력 포함)
+function getModalDept() {
+  const v = document.getElementById("modalDeptInput").value;
+  if (v === "__direct__") return document.getElementById("modalDeptDirectInput").value.trim();
+  return v;
+}
+
+// 현재 선택된 조 값 반환 (직접입력 포함)
+function getDept() {
+  const sel2 = getDept();
+  if (sel2 === "__direct__") return document.getElementById("deptDirectInput").value.trim();
+  return sel2;
+}
+
+// 현재 선택된 반 값 반환
+function getBan() {
+  return document.getElementById("banInput").value;
+}
 
 function setWeekFilter(idx) {
   activeWeekFilter = idx === "all" ? "all" : parseInt(idx);
@@ -625,7 +694,7 @@ function openModal(dateObj, hourObj, cellKey) {
 
   /* ── 이름/조를 상단 입력란에서 가져오거나, 팝업 내 입력란 노출 ── */
   let name = document.getElementById("nameInput").value.trim();
-  let dept = document.getElementById("deptInput").value;
+  let dept = getDept();
 
   modalCellKey = cellKey;
   modalHourObj = hourObj;
@@ -696,7 +765,7 @@ function openModal(dateObj, hourObj, cellKey) {
       btn.addEventListener("click", () => {
         // 이름/조 없으면 입력창 먼저 표시
         const curName = document.getElementById("nameInput").value.trim();
-        const curDept = document.getElementById("deptInput").value;
+        const curDept = getDept();
         if (!curName || !curDept) {
           document.getElementById("modalNameInput").value = curName;
           document.getElementById("modalDeptInput").value = curDept;
@@ -727,7 +796,12 @@ function openModal(dateObj, hourObj, cellKey) {
 
 function applyModalUserInput() {
   const name = document.getElementById("modalNameInput").value.trim();
-  const dept = document.getElementById("modalDeptInput").value;
+  const ban  = document.getElementById("modalBanInput").value;
+  const deptSelVal = document.getElementById("modalDeptInput").value;
+  const dept = deptSelVal === "__direct__"
+    ? document.getElementById("modalDeptDirectInput").value.trim()
+    : deptSelVal;
+
   if (!name) {
     document.getElementById("modalNameInput").style.borderColor = "#c0392b";
     document.getElementById("modalNameInput").focus();
@@ -742,7 +816,17 @@ function applyModalUserInput() {
 
   // 상단 입력란에도 반영
   document.getElementById("nameInput").value = name;
-  document.getElementById("deptInput").value = dept;
+  document.getElementById("banInput").value  = ban;
+  const deptSelMain = document.getElementById("deptInput");
+  const matchOpt = Array.from(deptSelMain.options).find(o => o.text === dept || o.value === dept);
+  if (matchOpt) {
+    deptSelMain.value = matchOpt.value;
+    document.getElementById("deptDirectInput").style.display = "none";
+  } else {
+    deptSelMain.value = "__direct__";
+    document.getElementById("deptDirectInput").style.display = "block";
+    document.getElementById("deptDirectInput").value = dept;
+  }
 
   // 슬롯 영역 이름 기준으로 내 예약 반영
   const dateKey0 = modalCellKey.split("_")[0];
@@ -789,6 +873,16 @@ function applyModalUserInput() {
       btn.className = "time-slot-btn" + (isSel ? " selected" : "");
       btn.textContent = slot.label;
       btn.addEventListener("click", () => {
+        const curName = document.getElementById("nameInput").value.trim();
+        const curDept = getDept();
+        if (!curName || !curDept) {
+          document.getElementById("modalNameInput").value = curName;
+          document.getElementById("modalUserInputArea").style.display = "block";
+          document.getElementById("modalSlotArea").style.display = "none";
+          document.getElementById("modalConfirmBtn").style.display = "none";
+          setTimeout(() => document.getElementById("modalNameInput").focus(), 80);
+          return;
+        }
         modalTempSel[slot.key] = !modalTempSel[slot.key];
         btn.classList.toggle("selected", !!modalTempSel[slot.key]);
         updateRangeDisplay();
@@ -801,7 +895,6 @@ function applyModalUserInput() {
   document.getElementById("modalSlotArea").style.display = "block";
   document.getElementById("modalConfirmBtn").style.display = "";
   updateRangeDisplay();
-  // 이름 입력 후 슬롯 재빌드 완료 — 사용자가 다시 시간을 선택하면 됨
 }
 
 function updateRangeDisplay() {
@@ -822,7 +915,7 @@ function clearModalSel() {
 
 function confirmModal() {
   const name = document.getElementById("nameInput").value.trim();
-  const dept = document.getElementById("deptInput").value;
+  const dept = getDept();
   const dateKey = modalCellKey.split("_")[0];
   const toDelete = [];
 
@@ -922,7 +1015,7 @@ function clearAll() {
 /* ── 제출 ── */
 async function submitData() {
   const name = document.getElementById("nameInput").value.trim();
-  const dept = document.getElementById("deptInput").value;
+  const dept = getDept();
 
   if (!name) {
     document.getElementById("nameInput").classList.add("error");
@@ -952,6 +1045,7 @@ async function submitData() {
     return;
   }
 
+  const ban = getBan();
   const fullName = name + " (" + dept + ")";
   const selections = {};
   Object.entries(sel).forEach(([ck, m]) => {
@@ -1001,7 +1095,7 @@ async function submitData() {
 /* ── 내 예약 불러오기 ── */
 async function loadMyData() {
   const name = document.getElementById("nameInput").value.trim();
-  const dept = document.getElementById("deptInput").value;
+  const dept = getDept();
 
   if (!name) {
     document.getElementById("nameInput").classList.add("error");
@@ -1073,7 +1167,7 @@ function showToast(msg, type="") {
 /* ── 임시저장 ── */
 function saveDraft() {
   const name = document.getElementById("nameInput").value.trim();
-  const dept = document.getElementById("deptInput").value;
+  const dept = getDept();
   const total = Object.values(sel).reduce((a,m)=>a+Object.values(m||{}).filter(Boolean).length,0);
 
   if (total === 0) { showToast("선택된 시간이 없습니다","error"); return; }
@@ -1098,7 +1192,18 @@ function restoreDraft() {
     if (!raw) { showToast("임시저장 내역이 없습니다","error"); return; }
     const draft = JSON.parse(raw);
     document.getElementById("nameInput").value = draft.name || "";
-    document.getElementById("deptInput").value = draft.dept || "";
+    if (draft.ban) document.getElementById("banInput").value = draft.ban;
+    // 조 복원
+    const draftDeptSel = document.getElementById("deptInput");
+    const draftMatchOpt = Array.from(draftDeptSel.options).find(o => o.text === (draft.dept||"") || o.value === (draft.dept||""));
+    if (draftMatchOpt) {
+      draftDeptSel.value = draftMatchOpt.value;
+      document.getElementById("deptDirectInput").style.display = "none";
+    } else if (draft.dept) {
+      draftDeptSel.value = "__direct__";
+      document.getElementById("deptDirectInput").style.display = "block";
+      document.getElementById("deptDirectInput").value = draft.dept;
+    }
     Object.keys(sel).forEach(k=>delete sel[k]);
     Object.entries(draft.sel||{}).forEach(([k,v])=>{ sel[k]=v; });
     buildSchedule();
@@ -1183,7 +1288,10 @@ function exitApp() {
   if (!confirm("나가시겠습니까?\n예약자명과 조가 초기화됩니다.")) return;
   Object.keys(sel).forEach(k => delete sel[k]);
   document.getElementById("nameInput").value = "";
+  document.getElementById("banInput").value = "수주반";
   document.getElementById("deptInput").value = "";
+  document.getElementById("deptDirectInput").style.display = "none";
+  document.getElementById("deptDirectInput").value = "";
   document.getElementById("draftBanner").style.display = "none";
   setLoadStatus("", "");
   buildSchedule();
