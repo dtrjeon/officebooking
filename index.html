@@ -500,7 +500,7 @@ function getModalDept() {
 
 // 현재 선택된 조 값 반환 (직접입력 포함)
 function getDept() {
-  const sel2 = getDept();
+  const sel2 = document.getElementById("deptInput").value;
   if (sel2 === "__direct__") return document.getElementById("deptDirectInput").value.trim();
   return sel2;
 }
@@ -711,15 +711,17 @@ function openModal(dateObj, hourObj, cellKey) {
   modalHourObj = hourObj;
   modalTempSel = Object.assign({}, sel[cellKey] || {});
 
-  // 본인 예약 슬롯을 modalTempSel에 자동 반영
+  // 본인 예약 슬롯을 modalTempSel에 자동 반영 (이름 있을 때만)
   const dateKey0 = cellKey.split("_")[0];
-  makeSlots(hourObj.start, hourObj.end).forEach(slot => {
-    const bKey = dateKey0 + "_" + slot.key;
-    const bookers = sheetData[bKey] || [];
-    if (bookers.some(b => b.name === name) && !Object.prototype.hasOwnProperty.call(modalTempSel, slot.key)) {
-      modalTempSel[slot.key] = true;
-    }
-  });
+  if (name) {
+    makeSlots(hourObj.start, hourObj.end).forEach(slot => {
+      const bKey = dateKey0 + "_" + slot.key;
+      const bookers = sheetData[bKey] || [];
+      if (bookers.some(b => b.name === name) && !Object.prototype.hasOwnProperty.call(modalTempSel, slot.key)) {
+        modalTempSel[slot.key] = true;
+      }
+    });
+  }
 
   document.getElementById("modalTitle").textContent =
     dateObj.label.replace("\n"," ") + "  " + hourObj.label + " 예약";
@@ -888,6 +890,20 @@ function applyModalUserInput() {
         const curDept = getDept();
         if (!curName || !curDept) {
           document.getElementById("modalNameInput").value = curName;
+          // 반 동기화
+          document.getElementById("modalBanInput").value = getBan();
+          // 조 동기화 (직접입력 포함)
+          const _curDept = getDept();
+          const _mSel = document.getElementById("modalDeptInput");
+          const _mMatch = Array.from(_mSel.options).find(o => o.text === _curDept || o.value === _curDept);
+          if (_mMatch) {
+            _mSel.value = _mMatch.value;
+            document.getElementById("modalDeptDirectInput").style.display = "none";
+          } else if (_curDept) {
+            _mSel.value = "__direct__";
+            document.getElementById("modalDeptDirectInput").style.display = "block";
+            document.getElementById("modalDeptDirectInput").value = _curDept;
+          }
           document.getElementById("modalUserInputArea").style.display = "block";
           document.getElementById("modalSlotArea").style.display = "none";
           document.getElementById("modalConfirmBtn").style.display = "none";
@@ -1038,7 +1054,10 @@ async function submitData() {
 
   if (!dept) {
     document.getElementById("deptInput").classList.add("error");
-    showToast("조를 선택해 주세요","error");
+    showToast("조를 선택하거나 직접 입력해 주세요","error");
+    document.getElementById("deptDirectInput").focus && document.getElementById("deptInput").value === "__direct__"
+      ? document.getElementById("deptDirectInput").focus()
+      : null;
     return;
   }
   document.getElementById("deptInput").classList.remove("error");
