@@ -694,6 +694,18 @@ function openModal(dateObj, hourObj, cellKey) {
       btn.className = "time-slot-btn" + (isSel ? " selected" : "");
       btn.textContent = slot.label;
       btn.addEventListener("click", () => {
+        // 이름/조 없으면 입력창 먼저 표시
+        const curName = document.getElementById("nameInput").value.trim();
+        const curDept = document.getElementById("deptInput").value;
+        if (!curName || !curDept) {
+          document.getElementById("modalNameInput").value = curName;
+          document.getElementById("modalDeptInput").value = curDept;
+          document.getElementById("modalUserInputArea").style.display = "block";
+          document.getElementById("modalSlotArea").style.display = "none";
+          document.getElementById("modalConfirmBtn").style.display = "none";
+          setTimeout(() => document.getElementById("modalNameInput").focus(), 80);
+          return;
+        }
         modalTempSel[slot.key] = !modalTempSel[slot.key];
         btn.classList.toggle("selected", !!modalTempSel[slot.key]);
         updateRangeDisplay();
@@ -704,16 +716,10 @@ function openModal(dateObj, hourObj, cellKey) {
 
   updateRangeDisplay();
 
-  // 이름/조 없으면 팝업 내 입력란 표시, 있으면 바로 슬롯 표시
-  const hasUser = !!(name && dept);
-  document.getElementById("modalUserInputArea").style.display = hasUser ? "none" : "block";
-  document.getElementById("modalSlotArea").style.display = hasUser ? "block" : "none";
-  document.getElementById("modalConfirmBtn").style.display = hasUser ? "" : "none";
-  if (!hasUser) {
-    document.getElementById("modalNameInput").value = name;
-    document.getElementById("modalDeptInput").value = dept;
-    setTimeout(() => document.getElementById("modalNameInput").focus(), 150);
-  }
+  // 항상 슬롯 화면으로 열림 (이름/조 입력창은 시간 클릭 시 표시)
+  document.getElementById("modalUserInputArea").style.display = "none";
+  document.getElementById("modalSlotArea").style.display = "block";
+  document.getElementById("modalConfirmBtn").style.display = "";
 
   document.getElementById("modalBackdrop").classList.add("show");
   document.body.style.overflow = "hidden";
@@ -795,6 +801,7 @@ function applyModalUserInput() {
   document.getElementById("modalSlotArea").style.display = "block";
   document.getElementById("modalConfirmBtn").style.display = "";
   updateRangeDisplay();
+  // 이름 입력 후 슬롯 재빌드 완료 — 사용자가 다시 시간을 선택하면 됨
 }
 
 function updateRangeDisplay() {
