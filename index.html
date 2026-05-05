@@ -550,8 +550,8 @@ function buildSchedule() {
           Object.entries(bookerMap).forEach(([name, info]) => {
             const row = document.createElement("div");
             row.className = "slot-booker-row";
-            const joStr = info.jo ? "/" + info.jo : "";
-            row.textContent = name + joStr;
+            row.textContent = name;  // 이름만 표시 (조는 공간 부족으로 생략)
+            if (info.jo) row.title = name + " (" + info.jo + ")";  // 마우스 오버 시 조 표시
             inner.appendChild(row);
           });
         } else if (hasMyData) {
