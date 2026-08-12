@@ -1,7 +1,7 @@
 {
   "name": "수지 전폭사무실 예약",
   "short_name": "전폭예약",
-  "start_url": "./index_booking.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f7f9fc",
   "theme_color": "#1a2a4a",
