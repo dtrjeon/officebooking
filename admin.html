@@ -45,6 +45,16 @@
   .search-input { padding:9px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; font-family:var(--font); outline:none; width:180px; }
   .search-input:focus { border-color:var(--accent); }
   .filter-sel { padding:9px 10px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; font-family:var(--font); outline:none; background:white; }
+
+  /* 주차 드롭다운(체크박스 다중선택) */
+  .week-dropdown { position:relative; }
+  .week-dropdown-btn { cursor:pointer; white-space:nowrap; }
+  .week-dropdown-panel { display:none; position:absolute; top:calc(100% + 4px); left:0; z-index:60; background:white; border:1.5px solid var(--border); border-radius:8px; box-shadow:0 6px 20px rgba(0,0,0,.14); max-height:300px; overflow-y:auto; min-width:230px; padding:8px; }
+  .week-dropdown-panel.show { display:block; }
+  .week-dropdown-actions { display:flex; gap:6px; padding:0 4px 8px; margin-bottom:6px; border-bottom:1px solid var(--border); }
+  .week-option { display:flex; align-items:center; gap:8px; padding:7px 6px; font-size:13px; cursor:pointer; border-radius:6px; }
+  .week-option:hover { background:var(--parchment); }
+  .week-option input { margin:0; flex-shrink:0; }
   .btn-sm { padding:9px 16px; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; border:1.5px solid var(--border); background:white; color:var(--ink); font-family:var(--font); white-space:nowrap; }
   .btn-sm.primary { background:var(--navy); color:white; border-color:var(--navy); }
   .btn-sm.danger  { background:#fff0f0; color:var(--red); border-color:#e8b4b4; }
@@ -169,6 +179,16 @@
     <select class="filter-sel" id="filterDept" onchange="renderTable()">
       <option value="all">조 전체</option>
     </select>
+    <div class="week-dropdown" id="weekDropdown">
+      <button type="button" class="filter-sel week-dropdown-btn" id="weekDropdownBtn" onclick="toggleWeekDropdown(event)">주차: 전체 ▾</button>
+      <div class="week-dropdown-panel" id="weekDropdownPanel">
+        <div class="week-dropdown-actions">
+          <button type="button" class="btn-sm" style="padding:5px 10px;font-size:12px" onclick="selectAllWeeks(true)">전체선택</button>
+          <button type="button" class="btn-sm" style="padding:5px 10px;font-size:12px" onclick="selectAllWeeks(false)">전체해제</button>
+        </div>
+        <div id="weekOptionList"></div>
+      </div>
+    </div>
     <button class="btn-sm refresh" onclick="loadData()">🔄 새로고침</button>
     <button class="btn-sm danger" onclick="bulkDelete()">🗑 선택 삭제</button>
     <button class="btn-sm danger" onclick="clearAll()" style="border-color:#a00;color:#a00;">⚠ 전체 초기화</button>
@@ -265,6 +285,84 @@ let GAS_URL = "";
 let ADMIN_KEY = "";
 let allRows = []; // 서버에서 받은 원본 데이터
 
+/* ══════════════════════════════════════════════
+   주차 자동 생성 (index.html과 동일한 규칙: 2026-08-10(월)부터 21주)
+   ══════════════════════════════════════════════ */
+function generateWeeks(startDateStr, weekCount) {
+  const DAY_NAMES = ["월","화","수","목","금","토","주일"];
+  const start = new Date(startDateStr + "T00:00:00");
+  const weeks = [];
+  for (let w = 0; w < weekCount; w++) {
+    const dates = [];
+    for (let d = 0; d < 7; d++) {
+      const cur = new Date(start);
+      cur.setDate(start.getDate() + w * 7 + d);
+      const mm = String(cur.getMonth() + 1).padStart(2, "0");
+      const dd = String(cur.getDate()).padStart(2, "0");
+      dates.push({ label: (cur.getMonth()+1) + "/" + cur.getDate() + "\n" + DAY_NAMES[d], key: mm + dd });
+    }
+    const raw = w - 2;
+    const weekLabel = raw < 0 ? ("D" + raw + "주") : ((raw + 1) + "주");
+    const firstDay = dates[0].label.split("\n")[0];
+    const lastDay  = dates[6].label.split("\n")[0];
+    weeks.push({ label: weekLabel + " (" + firstDay + " ~ " + lastDay + ")", dates });
+  }
+  return weeks;
+}
+
+const WEEKS = generateWeeks("2026-08-10", 21);
+let selectedWeeks = new Set(WEEKS.map((_, i) => i)); // 기본값: 전체 선택
+
+function getWeekIndexForDateKey(dateKey) {
+  for (let i = 0; i < WEEKS.length; i++) {
+    if (WEEKS[i].dates.some(d => d.key === dateKey)) return i;
+  }
+  return -1; // 정의된 주차 범위 밖의 날짜(임의 수정 등) — 필터로 숨기지 않음
+}
+
+function buildWeekOptionList() {
+  const wrap = document.getElementById("weekOptionList");
+  wrap.innerHTML = WEEKS.map((w, i) => `
+    <label class="week-option">
+      <input type="checkbox" ${selectedWeeks.has(i) ? "checked" : ""} onchange="toggleWeek(${i}, this.checked)"/>
+      <span>${esc(w.label)}</span>
+    </label>`).join("");
+}
+
+function toggleWeek(i, checked) {
+  if (checked) selectedWeeks.add(i); else selectedWeeks.delete(i);
+  updateWeekDropdownLabel();
+  renderTable();
+}
+
+function selectAllWeeks(all) {
+  selectedWeeks = new Set(all ? WEEKS.map((_, i) => i) : []);
+  buildWeekOptionList();
+  updateWeekDropdownLabel();
+  renderTable();
+}
+
+function updateWeekDropdownLabel() {
+  const btn = document.getElementById("weekDropdownBtn");
+  if (selectedWeeks.size === WEEKS.length) btn.textContent = "주차: 전체 ▾";
+  else if (selectedWeeks.size === 0)       btn.textContent = "주차: 없음 ▾";
+  else                                     btn.textContent = "주차: " + selectedWeeks.size + "개 ▾";
+}
+
+function toggleWeekDropdown(e) {
+  e.stopPropagation();
+  document.getElementById("weekDropdownPanel").classList.toggle("show");
+}
+
+document.addEventListener("click", (e) => {
+  const wrap = document.getElementById("weekDropdown");
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById("weekDropdownPanel").classList.remove("show");
+  }
+});
+
+buildWeekOptionList();
+
 /* ── 로그인 ── */
 async function doLogin() {
   const url = document.getElementById("gasUrl").value.trim();
@@ -347,7 +445,9 @@ function renderTable() {
     const nameMatch = !q || r.name.toLowerCase().includes(q) || r.dept.toLowerCase().includes(q);
     const devMatch  = devF  === "all" || r.deviceType === devF;
     const deptMatch = deptF === "all" || r.dept === deptF;
-    return nameMatch && devMatch && deptMatch;
+    const weekIdx   = getWeekIndexForDateKey(r.dateKey);
+    const weekMatch = weekIdx === -1 || selectedWeeks.has(weekIdx);
+    return nameMatch && devMatch && deptMatch && weekMatch;
   });
 
   const tbody = document.getElementById("tableBody");
