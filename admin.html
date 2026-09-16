@@ -254,6 +254,11 @@
 <script>
 /* ══════════════════════════════════════════════
    관리자 페이지 스크립트
+   이 페이지가 호출하는 GAS 백엔드 액션 (Code.gs 참고):
+     GET  ?action=getAllRows&adminKey=...             → 전체 예약 행 조회
+     POST { action:"adminDelete", adminKey, rowIndexes:[...] } → 선택/단일 삭제
+     POST { action:"adminUpdate", adminKey, rowIndex, name, dept, dateKey, timeKey, deviceType } → 단일 수정
+     POST { action:"clearAll",   adminKey }            → 전체 초기화
    ══════════════════════════════════════════════ */
 
 let GAS_URL = "";

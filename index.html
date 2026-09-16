@@ -80,7 +80,6 @@
   .slot-inner { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; pointer-events:none; }
   .slot-check { font-size:13px; color:var(--purple); }
   .slot-time  { font-size:8px; color:var(--purple); font-weight:600; line-height:1.3; text-align:center; white-space:pre-line; }
-  .grid-table td.slot.blocked { background:#f0f0f0; cursor:not-allowed; }
   .slot-booker-name { font-size:9px; font-weight:700; color:white; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:0 3px; max-width:100%; }
   .slot-booker-time { font-size:8px; color:rgba(255,255,255,.75); line-height:1.3; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; padding:0 2px; }
   .slot-booker-row { font-size:8px; font-weight:600; color:white; line-height:1.4; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:0 3px; max-width:100%; text-align:center; }
@@ -125,13 +124,12 @@
   .modal-body { padding:14px 20px 0; }
   .modal-section-label { font-size:11px; font-weight:600; color:var(--muted); letter-spacing:.06em; margin:0 0 8px; padding-bottom:4px; border-bottom:1px solid var(--border); }
   .time-slot-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:7px; }
-  .time-slot-btn { padding:10px 4px; border-radius:8px; text-align:center; font-family:var(--font); font-size:13px; font-weight:500; cursor:pointer; border:1.5px solid var(--border); background:var(--parchment); color:var(--muted); min-height:42px; white-space:pre-line; line-height:1.3; }
+  .time-slot-btn { padding:10px 4px; border-radius:8px; text-align:center; font-family:var(--font); font-size:13px; font-weight:500; cursor:pointer; border:1.5px solid var(--border); background:var(--parchment); color:var(--muted); min-height:44px; white-space:pre-line; line-height:1.3; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
   .time-slot-btn.booked   { background:#1e3a6e; color:rgba(255,255,255,.45); border-color:#1e3a6e; cursor:not-allowed; font-size:11px; }
   .time-slot-btn.mine     { background:var(--purple); color:white; border-color:var(--purple); cursor:pointer; font-size:11px; }
   .time-slot-btn.mine:hover { background:var(--purple-dark); }
   .time-slot-btn.selected { background:var(--purple); color:white; border-color:var(--purple); }
   .selected-range-display { margin:14px 0 0; padding:10px 14px; background:var(--purple-pale); border:1px solid var(--purple-border); border-radius:8px; font-size:13px; color:var(--purple); text-align:center; min-height:38px; display:flex; align-items:center; justify-content:center; }
-  .time-slot-btn { padding:10px 4px; border-radius:8px; text-align:center; font-family:var(--font); font-size:13px; font-weight:500; cursor:pointer; border:1.5px solid var(--border); background:var(--parchment); color:var(--muted); min-height:44px; white-space:pre-line; line-height:1.3; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
   .modal-footer { display:flex; gap:10px; padding:14px 20px 16px; }
   .modal-btn { flex:1; padding:13px; border-radius:var(--radius); font-family:var(--font); font-size:15px; font-weight:500; cursor:pointer; min-height:48px; border:1.5px solid var(--border); background:white; color:var(--ink); touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
   .modal-btn-confirm { background:var(--purple); border-color:var(--purple); color:white; }
@@ -143,7 +141,7 @@
 <header class="header">
   <div class="header-deco">▪ ▪ ▪</div>
   <h1>수지전폭사무실 사용예약 현황</h1>
-  <p class="sub">예약 가능 시간 : 09:00 ~ 20:00</p>
+  <p class="sub">예약 가능 시간 : 09:00 ~ 22:00</p>
   <span class="period-badge">예약 기간 : 2026.08.10 ~ 2027.01.03</span>
   <div class="intro-box">
     <span class="notice-line">셀을 탭하면 오전 / 오후 / 저녁 시간을 선택할 수 있습니다.</span>
@@ -416,77 +414,48 @@ const DUMMY_BOOKINGS = {
 const isDemoMode = !SERVER_CONFIG.GAS_URL;
 let testStore = []; // 데모 모드 전용
 
-/* ── 주차/시간 설정 ── */
-const WEEKS = [
-  { label:"D-2주 (8/10 ~ 8/16)", dates:[
-    {label:"8/10\n월",key:"0810"},{label:"8/11\n화",key:"0811",type:"tuesday"},{label:"8/12\n수",key:"0812"},{label:"8/13\n목",key:"0813"},{label:"8/14\n금",key:"0814"},{label:"8/15\n토",key:"0815",type:"saturday"},{label:"8/16\n주일",key:"0816",type:"sunday"}
-  ]},
-  { label:"D-1주 (8/17 ~ 8/23)", dates:[
-    {label:"8/17\n월",key:"0817"},{label:"8/18\n화",key:"0818",type:"tuesday"},{label:"8/19\n수",key:"0819"},{label:"8/20\n목",key:"0820"},{label:"8/21\n금",key:"0821"},{label:"8/22\n토",key:"0822",type:"saturday"},{label:"8/23\n주일",key:"0823",type:"sunday"}
-  ]},
-  { label:"1주 (8/24 ~ 8/30)", dates:[
-    {label:"8/24\n월",key:"0824"},{label:"8/25\n화",key:"0825",type:"tuesday"},{label:"8/26\n수",key:"0826"},{label:"8/27\n목",key:"0827"},{label:"8/28\n금",key:"0828"},{label:"8/29\n토",key:"0829",type:"saturday"},{label:"8/30\n주일",key:"0830",type:"sunday"}
-  ]},
-  { label:"2주 (8/31 ~ 9/6)", dates:[
-    {label:"8/31\n월",key:"0831"},{label:"9/1\n화",key:"0901",type:"tuesday"},{label:"9/2\n수",key:"0902"},{label:"9/3\n목",key:"0903"},{label:"9/4\n금",key:"0904"},{label:"9/5\n토",key:"0905",type:"saturday"},{label:"9/6\n주일",key:"0906",type:"sunday"}
-  ]},
-  { label:"3주 (9/7 ~ 9/13)", dates:[
-    {label:"9/7\n월",key:"0907"},{label:"9/8\n화",key:"0908",type:"tuesday"},{label:"9/9\n수",key:"0909"},{label:"9/10\n목",key:"0910"},{label:"9/11\n금",key:"0911"},{label:"9/12\n토",key:"0912",type:"saturday"},{label:"9/13\n주일",key:"0913",type:"sunday"}
-  ]},
-  { label:"4주 (9/14 ~ 9/20)", dates:[
-    {label:"9/14\n월",key:"0914"},{label:"9/15\n화",key:"0915",type:"tuesday"},{label:"9/16\n수",key:"0916"},{label:"9/17\n목",key:"0917"},{label:"9/18\n금",key:"0918"},{label:"9/19\n토",key:"0919",type:"saturday"},{label:"9/20\n주일",key:"0920",type:"sunday"}
-  ]},
-  { label:"5주 (9/21 ~ 9/27)", dates:[
-    {label:"9/21\n월",key:"0921"},{label:"9/22\n화",key:"0922",type:"tuesday"},{label:"9/23\n수",key:"0923"},{label:"9/24\n목",key:"0924"},{label:"9/25\n금",key:"0925"},{label:"9/26\n토",key:"0926",type:"saturday"},{label:"9/27\n주일",key:"0927",type:"sunday"}
-  ]},
-  { label:"6주 (9/28 ~ 10/4)", dates:[
-    {label:"9/28\n월",key:"0928"},{label:"9/29\n화",key:"0929",type:"tuesday"},{label:"9/30\n수",key:"0930"},{label:"10/1\n목",key:"1001"},{label:"10/2\n금",key:"1002"},{label:"10/3\n토",key:"1003",type:"saturday"},{label:"10/4\n주일",key:"1004",type:"sunday"}
-  ]},
-  { label:"7주 (10/5 ~ 10/11)", dates:[
-    {label:"10/5\n월",key:"1005"},{label:"10/6\n화",key:"1006",type:"tuesday"},{label:"10/7\n수",key:"1007"},{label:"10/8\n목",key:"1008"},{label:"10/9\n금",key:"1009"},{label:"10/10\n토",key:"1010",type:"saturday"},{label:"10/11\n주일",key:"1011",type:"sunday"}
-  ]},
-  { label:"8주 (10/12 ~ 10/18)", dates:[
-    {label:"10/12\n월",key:"1012"},{label:"10/13\n화",key:"1013",type:"tuesday"},{label:"10/14\n수",key:"1014"},{label:"10/15\n목",key:"1015"},{label:"10/16\n금",key:"1016"},{label:"10/17\n토",key:"1017",type:"saturday"},{label:"10/18\n주일",key:"1018",type:"sunday"}
-  ]},
-  { label:"9주 (10/19 ~ 10/25)", dates:[
-    {label:"10/19\n월",key:"1019"},{label:"10/20\n화",key:"1020",type:"tuesday"},{label:"10/21\n수",key:"1021"},{label:"10/22\n목",key:"1022"},{label:"10/23\n금",key:"1023"},{label:"10/24\n토",key:"1024",type:"saturday"},{label:"10/25\n주일",key:"1025",type:"sunday"}
-  ]},
-  { label:"10주 (10/26 ~ 11/1)", dates:[
-    {label:"10/26\n월",key:"1026"},{label:"10/27\n화",key:"1027",type:"tuesday"},{label:"10/28\n수",key:"1028"},{label:"10/29\n목",key:"1029"},{label:"10/30\n금",key:"1030"},{label:"10/31\n토",key:"1031",type:"saturday"},{label:"11/1\n주일",key:"1101",type:"sunday"}
-  ]},
-  { label:"11주 (11/2 ~ 11/8)", dates:[
-    {label:"11/2\n월",key:"1102"},{label:"11/3\n화",key:"1103",type:"tuesday"},{label:"11/4\n수",key:"1104"},{label:"11/5\n목",key:"1105"},{label:"11/6\n금",key:"1106"},{label:"11/7\n토",key:"1107",type:"saturday"},{label:"11/8\n주일",key:"1108",type:"sunday"}
-  ]},
-  { label:"12주 (11/9 ~ 11/15)", dates:[
-    {label:"11/9\n월",key:"1109"},{label:"11/10\n화",key:"1110",type:"tuesday"},{label:"11/11\n수",key:"1111"},{label:"11/12\n목",key:"1112"},{label:"11/13\n금",key:"1113"},{label:"11/14\n토",key:"1114",type:"saturday"},{label:"11/15\n주일",key:"1115",type:"sunday"}
-  ]},
-  { label:"13주 (11/16 ~ 11/22)", dates:[
-    {label:"11/16\n월",key:"1116"},{label:"11/17\n화",key:"1117",type:"tuesday"},{label:"11/18\n수",key:"1118"},{label:"11/19\n목",key:"1119"},{label:"11/20\n금",key:"1120"},{label:"11/21\n토",key:"1121",type:"saturday"},{label:"11/22\n주일",key:"1122",type:"sunday"}
-  ]},
-  { label:"14주 (11/23 ~ 11/29)", dates:[
-    {label:"11/23\n월",key:"1123"},{label:"11/24\n화",key:"1124",type:"tuesday"},{label:"11/25\n수",key:"1125"},{label:"11/26\n목",key:"1126"},{label:"11/27\n금",key:"1127"},{label:"11/28\n토",key:"1128",type:"saturday"},{label:"11/29\n주일",key:"1129",type:"sunday"}
-  ]},
-  { label:"15주 (11/30 ~ 12/6)", dates:[
-    {label:"11/30\n월",key:"1130"},{label:"12/1\n화",key:"1201",type:"tuesday"},{label:"12/2\n수",key:"1202"},{label:"12/3\n목",key:"1203"},{label:"12/4\n금",key:"1204"},{label:"12/5\n토",key:"1205",type:"saturday"},{label:"12/6\n주일",key:"1206",type:"sunday"}
-  ]},
-  { label:"16주 (12/7 ~ 12/13)", dates:[
-    {label:"12/7\n월",key:"1207"},{label:"12/8\n화",key:"1208",type:"tuesday"},{label:"12/9\n수",key:"1209"},{label:"12/10\n목",key:"1210"},{label:"12/11\n금",key:"1211"},{label:"12/12\n토",key:"1212",type:"saturday"},{label:"12/13\n주일",key:"1213",type:"sunday"}
-  ]},
-  { label:"17주 (12/14 ~ 12/20)", dates:[
-    {label:"12/14\n월",key:"1214"},{label:"12/15\n화",key:"1215",type:"tuesday"},{label:"12/16\n수",key:"1216"},{label:"12/17\n목",key:"1217"},{label:"12/18\n금",key:"1218"},{label:"12/19\n토",key:"1219",type:"saturday"},{label:"12/20\n주일",key:"1220",type:"sunday"}
-  ]},
-  { label:"18주 (12/21 ~ 12/27)", dates:[
-    {label:"12/21\n월",key:"1221"},{label:"12/22\n화",key:"1222",type:"tuesday"},{label:"12/23\n수",key:"1223"},{label:"12/24\n목",key:"1224"},{label:"12/25\n금",key:"1225"},{label:"12/26\n토",key:"1226",type:"saturday"},{label:"12/27\n주일",key:"1227",type:"sunday"}
-  ]},
-  { label:"19주 (12/28 ~ 1/3)", dates:[
-    {label:"12/28\n월",key:"1228"},{label:"12/29\n화",key:"1229",type:"tuesday"},{label:"12/30\n수",key:"1230"},{label:"12/31\n목",key:"1231"},{label:"1/1\n금",key:"0101"},{label:"1/2\n토",key:"0102",type:"saturday"},{label:"1/3\n주일",key:"0103",type:"sunday"}
-  ]},
-];
+/* ══════════════════════════════════════════════
+   주차 자동 생성
+   2026-08-10(월)부터 21주(D-2주 ~ 19주) 자동 생성.
+   화요일 오전/오후, 주일 저녁 예약불가 처리는 buildSchedule()/openModal()에서 처리.
+   기간을 늘리려면 WEEK_COUNT만 늘리면 됨(달력에서 자동 계산).
+   ══════════════════════════════════════════════ */
+function generateWeeks(startDateStr, weekCount) {
+  const DAY_NAMES = ["월","화","수","목","금","토","주일"];
+  const DAY_TYPES = [null, "tuesday", null, null, null, "saturday", "sunday"]; // 월~주일
+  const start = new Date(startDateStr + "T00:00:00");
+  const weeks = [];
+
+  for (let w = 0; w < weekCount; w++) {
+    const dates = [];
+    for (let d = 0; d < 7; d++) {
+      const cur = new Date(start);
+      cur.setDate(start.getDate() + w * 7 + d);
+      const mm = String(cur.getMonth() + 1).padStart(2, "0");
+      const dd = String(cur.getDate()).padStart(2, "0");
+      const dateEntry = {
+        label: (cur.getMonth() + 1) + "/" + cur.getDate() + "\n" + DAY_NAMES[d],
+        key: mm + dd,
+      };
+      if (DAY_TYPES[d]) dateEntry.type = DAY_TYPES[d];
+      dates.push(dateEntry);
+    }
+    // 주차 라벨: D-2, D-1, 1, 2, ... (0은 건너뜀)
+    const raw = w - 2;
+    const weekLabel = raw < 0 ? ("D" + raw + "주") : ((raw + 1) + "주");
+    const firstDay = dates[0].label.split("\n")[0];
+    const lastDay  = dates[6].label.split("\n")[0];
+    weeks.push({ label: weekLabel + " (" + firstDay + " ~ " + lastDay + ")", dates });
+  }
+  return weeks;
+}
+
+const WEEKS = generateWeeks("2026-08-10", 21);
 
 const HOURS = [
   {key:"am",  label:"오전", rangeLabel:"09:00~12:00", start:9,  end:11},
-  {key:"pm",  label:"오후", rangeLabel:"13:00~17:00", start:13, end:16},
-  {key:"eve", label:"저녁", rangeLabel:"18:00~20:00", start:18, end:19},
+  {key:"pm",  label:"오후", rangeLabel:"13:00~18:00", start:13, end:17},
+  {key:"eve", label:"저녁", rangeLabel:"18:00~22:00", start:18, end:21},
 ];
 
 function makeSlots(s, e) {
@@ -553,6 +522,110 @@ function getDept() {
 // 현재 선택된 반 값 반환
 function getBan() {
   return document.getElementById("banInput").value;
+}
+
+/* ── 날짜키(MMDD)로 WEEKS에서 날짜 객체 조회 ── */
+function findDateByKey(dateKey) {
+  for (const week of WEEKS) {
+    const found = week.dates.find(d => d.key === dateKey);
+    if (found) return found;
+  }
+  return {};
+}
+
+/* ── 개별 30분 슬롯 단위 예약불가 규칙 ── */
+function isSlotBlocked(dateType, hourKey, slotKey) {
+  const h = parseInt(String(slotKey).slice(0, 2), 10);
+  if (dateType === "sunday"   && hourKey === "pm" && h >= 14) return true; // 주일 오후 14시 이후
+  if (dateType === "saturday" && hourKey === "pm" && slotKey === "1330") return true; // 토요일 13:30
+  return false;
+}
+
+/* ── 모달 시간 슬롯 그리드 렌더링 (openModal / applyModalUserInput 공용) ── */
+function buildSlotGrid(dateKey, hourObj) {
+  const grid = document.getElementById("slotGrid");
+  grid.innerHTML = "";
+  const name = document.getElementById("nameInput").value.trim();
+  const dateObj = findDateByKey(dateKey);
+
+  makeSlots(hourObj.start, hourObj.end).forEach(slot => {
+    grid.appendChild(buildSlotButton(dateKey, hourObj, dateObj, slot, name));
+  });
+}
+
+function buildSlotButton(dateKey, hourObj, dateObj, slot, name) {
+  const btn = document.createElement("button");
+  const bKey = dateKey + "_" + slot.key;
+  const bookers = sheetData[bKey] || [];
+  const isMine  = bookers.some(b => b.name === name);
+  const isOther = bookers.length > 0 && !isMine;
+  const isSel   = !!modalTempSel[slot.key];
+
+  // 예약불가 슬롯(주일 오후 2시 이후 / 토요일 13:30 등)
+  if (isSlotBlocked(dateObj.type, hourObj.key, slot.key)) {
+    btn.className = "time-slot-btn booked";
+    btn.disabled  = true;
+    btn.textContent = slot.label + "\n예약불가";
+    return btn;
+  }
+
+  if (isOther) {
+    // 타인 예약 — 잠금
+    btn.className = "time-slot-btn booked";
+    btn.disabled  = true;
+    const b0 = bookers[0];
+    btn.textContent = slot.label + "\n" + b0.name + (b0.jo ? "/" + b0.jo : "");
+  } else if (isMine) {
+    // 본인 예약 — 수정/삭제 가능 (토글)
+    btn.className = "time-slot-btn mine" + (isSel ? " selected" : "");
+    btn.textContent = slot.label + "\n✔ 내예약";
+    if (!Object.prototype.hasOwnProperty.call(modalTempSel, slot.key)) {
+      modalTempSel[slot.key] = true;
+    }
+    btn.addEventListener("click", () => {
+      modalTempSel[slot.key] = !modalTempSel[slot.key];
+      btn.classList.toggle("selected", !!modalTempSel[slot.key]);
+      btn.textContent = slot.label + (modalTempSel[slot.key] ? "\n✔ 내예약" : "\n삭제됨");
+      updateRangeDisplay();
+    });
+  } else {
+    // 빈 슬롯 — 신규 예약
+    btn.className = "time-slot-btn" + (isSel ? " selected" : "");
+    btn.textContent = slot.label;
+    btn.addEventListener("click", () => {
+      // 이름/조 없으면 입력창 먼저 표시
+      const curName = document.getElementById("nameInput").value.trim();
+      const curDept = getDept();
+      if (!curName || !curDept) {
+        showModalUserInputArea(curName, curDept);
+        return;
+      }
+      modalTempSel[slot.key] = !modalTempSel[slot.key];
+      btn.classList.toggle("selected", !!modalTempSel[slot.key]);
+      updateRangeDisplay();
+    });
+  }
+  return btn;
+}
+
+/* ── 모달 내 이름/조 입력창 표시 (미입력 상태로 시간 슬롯 클릭 시) ── */
+function showModalUserInputArea(curName, curDept) {
+  document.getElementById("modalNameInput").value = curName;
+  document.getElementById("modalBanInput").value = getBan();
+  const mSel = document.getElementById("modalDeptInput");
+  const mMatch = Array.from(mSel.options).find(o => o.text === curDept || o.value === curDept);
+  if (mMatch) {
+    mSel.value = mMatch.value;
+    document.getElementById("modalDeptDirectInput").style.display = "none";
+  } else if (curDept) {
+    mSel.value = "__direct__";
+    document.getElementById("modalDeptDirectInput").style.display = "block";
+    document.getElementById("modalDeptDirectInput").value = curDept;
+  }
+  document.getElementById("modalUserInputArea").style.display = "block";
+  document.getElementById("modalSlotArea").style.display = "none";
+  document.getElementById("modalConfirmBtn").style.display = "none";
+  setTimeout(() => document.getElementById("modalNameInput").focus(), 80);
 }
 
 function setWeekFilter(idx) {
@@ -783,75 +856,8 @@ function openModal(dateObj, hourObj, cellKey) {
     dateObj.label.replace("\n"," ") + "  " + hourObj.label + " 예약";
   document.getElementById("slotLabel").textContent = hourObj.label + "  (" + hourObj.rangeLabel + ")";
 
-  const grid = document.getElementById("slotGrid");
-  grid.innerHTML = "";
   const dateKey = cellKey.split("_")[0];
-
-  makeSlots(hourObj.start, hourObj.end).forEach(slot => {
-    const btn = document.createElement("button");
-    const bKey = dateKey + "_" + slot.key;
-    const bookers = sheetData[bKey] || [];
-    const isMine  = bookers.some(b => b.name === name);
-    const isOther = bookers.length > 0 && !isMine;
-    const isSel   = !!modalTempSel[slot.key];
-
-    // 주일 오후 2시(14:00) 이후 사용불가
-    const slotHour = parseInt(slot.key.slice(0,2), 10);
-    const isSundayPMBlocked = dateObj.type === "sunday" && hourObj.key === "pm" && slotHour >= 14;
-    if (isSundayPMBlocked) {
-      btn.className = "time-slot-btn booked";
-      btn.disabled  = true;
-      btn.textContent = slot.label + "\n예약불가";
-      grid.appendChild(btn);
-      return;
-    }
-
-    if (isOther) {
-      // 타인 예약 — 잠금
-      btn.className = "time-slot-btn booked";
-      btn.disabled  = true;
-      const b0 = bookers[0];
-      const joStr = b0.jo ? "/" + b0.jo : "";
-      btn.textContent = slot.label + "\n" + b0.name + joStr;
-    } else if (isMine) {
-      // 본인 예약 — 수정/삭제 가능 (토글)
-      btn.className = "time-slot-btn mine" + (isSel ? " selected" : "");
-      btn.textContent = slot.label + "\n✔ 내예약";
-      modalTempSel[slot.key] = isSel !== false ? (isSel || true) : false;
-      if (!Object.prototype.hasOwnProperty.call(modalTempSel, slot.key)) {
-        modalTempSel[slot.key] = true;
-      }
-      btn.addEventListener("click", () => {
-        modalTempSel[slot.key] = !modalTempSel[slot.key];
-        btn.classList.toggle("selected", !!modalTempSel[slot.key]);
-        btn.textContent = slot.label + (modalTempSel[slot.key] ? "\n✔ 내예약" : "\n삭제됨");
-        updateRangeDisplay();
-      });
-    } else {
-      // 빈 슬롯 — 신규 예약
-      btn.className = "time-slot-btn" + (isSel ? " selected" : "");
-      btn.textContent = slot.label;
-      btn.addEventListener("click", () => {
-        // 이름/조 없으면 입력창 먼저 표시
-        const curName = document.getElementById("nameInput").value.trim();
-        const curDept = getDept();
-        if (!curName || !curDept) {
-          document.getElementById("modalNameInput").value = curName;
-          document.getElementById("modalDeptInput").value = curDept;
-          document.getElementById("modalUserInputArea").style.display = "block";
-          document.getElementById("modalSlotArea").style.display = "none";
-          document.getElementById("modalConfirmBtn").style.display = "none";
-          setTimeout(() => document.getElementById("modalNameInput").focus(), 80);
-          return;
-        }
-        modalTempSel[slot.key] = !modalTempSel[slot.key];
-        btn.classList.toggle("selected", !!modalTempSel[slot.key]);
-        updateRangeDisplay();
-      });
-    }
-    grid.appendChild(btn);
-  });
-
+  buildSlotGrid(dateKey, hourObj);
   updateRangeDisplay();
 
   // 항상 슬롯 화면으로 열림 (이름/조 입력창은 시간 클릭 시 표시)
@@ -907,72 +913,7 @@ function applyModalUserInput() {
     }
   });
 
-  const grid = document.getElementById("slotGrid");
-  grid.innerHTML = "";
-  makeSlots(modalHourObj.start, modalHourObj.end).forEach(slot => {
-    const btn = document.createElement("button");
-    const bKey = dateKey0 + "_" + slot.key;
-    const bookers = sheetData[bKey] || [];
-    const isMine  = bookers.some(b => b.name === name);
-    const isOther = bookers.length > 0 && !isMine;
-    const isSel   = !!modalTempSel[slot.key];
-    const slotHour = parseInt(slot.key.slice(0,2), 10);
-    const dateObj2 = (() => { for (const w of WEEKS) for (const d of w.dates) if (d.key === dateKey0) return d; return {}; })();
-    const isSundayPMBlocked = dateObj2.type === "sunday" && modalHourObj.key === "pm" && slotHour >= 14;
-    if (isSundayPMBlocked) {
-      btn.className = "time-slot-btn booked"; btn.disabled = true;
-      btn.textContent = slot.label + "\n예약불가";
-      grid.appendChild(btn); return;
-    }
-    if (isOther) {
-      btn.className = "time-slot-btn booked"; btn.disabled = true;
-      const b0 = bookers[0];
-      btn.textContent = slot.label + "\n" + b0.name + (b0.jo ? "/" + b0.jo : "");
-    } else if (isMine) {
-      btn.className = "time-slot-btn mine" + (isSel ? " selected" : "");
-      btn.textContent = slot.label + "\n✔ 내예약";
-      if (!Object.prototype.hasOwnProperty.call(modalTempSel, slot.key)) modalTempSel[slot.key] = true;
-      btn.addEventListener("click", () => {
-        modalTempSel[slot.key] = !modalTempSel[slot.key];
-        btn.classList.toggle("selected", !!modalTempSel[slot.key]);
-        btn.textContent = slot.label + (modalTempSel[slot.key] ? "\n✔ 내예약" : "\n삭제됨");
-        updateRangeDisplay();
-      });
-    } else {
-      btn.className = "time-slot-btn" + (isSel ? " selected" : "");
-      btn.textContent = slot.label;
-      btn.addEventListener("click", () => {
-        const curName = document.getElementById("nameInput").value.trim();
-        const curDept = getDept();
-        if (!curName || !curDept) {
-          document.getElementById("modalNameInput").value = curName;
-          // 반 동기화
-          document.getElementById("modalBanInput").value = getBan();
-          // 조 동기화 (직접입력 포함)
-          const _curDept = getDept();
-          const _mSel = document.getElementById("modalDeptInput");
-          const _mMatch = Array.from(_mSel.options).find(o => o.text === _curDept || o.value === _curDept);
-          if (_mMatch) {
-            _mSel.value = _mMatch.value;
-            document.getElementById("modalDeptDirectInput").style.display = "none";
-          } else if (_curDept) {
-            _mSel.value = "__direct__";
-            document.getElementById("modalDeptDirectInput").style.display = "block";
-            document.getElementById("modalDeptDirectInput").value = _curDept;
-          }
-          document.getElementById("modalUserInputArea").style.display = "block";
-          document.getElementById("modalSlotArea").style.display = "none";
-          document.getElementById("modalConfirmBtn").style.display = "none";
-          setTimeout(() => document.getElementById("modalNameInput").focus(), 80);
-          return;
-        }
-        modalTempSel[slot.key] = !modalTempSel[slot.key];
-        btn.classList.toggle("selected", !!modalTempSel[slot.key]);
-        updateRangeDisplay();
-      });
-    }
-    grid.appendChild(btn);
-  });
+  buildSlotGrid(dateKey0, modalHourObj);
 
   document.getElementById("modalUserInputArea").style.display = "none";
   document.getElementById("modalSlotArea").style.display = "block";
@@ -1063,7 +1004,7 @@ function updateSummary() {
     // 예약불가 슬롯 집계 제외
     if (dtype === "tuesday" && (zone === "am" || zone === "pm")) continue; // 화요일 오전/오후
     if (dtype === "sunday"  && zone === "eve") continue;                   // 주일 저녁
-    if (dtype === "sunday"  && zone === "pm" && h >= 14) continue;         // 주일 오후 14시 이후
+    if (isSlotBlocked(dtype, zone, tk)) continue;                          // 주일 14시 이후 / 토요일 13:30 등
 
     arr.forEach(b => {
       const dayUid  = dk + "_" + b.name;
@@ -1394,339 +1335,9 @@ function exitApp() {
 
 <!--
 =================================================================
-  Google Apps Script (GAS) 연동 구현 가이드
-=================================================================
-
-1. Google Sheets 구조:
-   시트명: "예약현황"
-   컬럼: A=이름(조포함), B=날짜키(MMDD), C=시간키(HHMM), D=조, E=제출일시
-
-2. Apps Script 코드 (Code.gs):
-
-function doGet(e) {
-  const action = e.parameter.action;
-  if (action === "getAll")  return getAll();
-  if (action === "getMine") return getMine(e.parameter.name);
-  return resp({ok:false, message:"unknown action"});
-}
-
-function doPost(e) {
-  const body = JSON.parse(e.postData.contents);
-  if (body.action === "submit")  return submitBooking(body);
-  if (body.action === "delete")  return deleteBooking(body);
-  if (body.action === "clearAll") return clearAllBookings(body);
-  return resp({ok:false, message:"unknown action"});
-}
-
-function getAll() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("예약현황");
-  const rows = sheet.getDataRange().getValues().slice(1); // 헤더 제외
-  const data = {};
-  rows.forEach(([name, dk, tk, jo, ts]) => {
-    if (!name || !dk || !tk) return;
-    const key = String(dk).padStart(4,"0") + "_" + String(tk).padStart(4,"0");
-    if (!data[key]) data[key] = [];
-    const tLabel = String(tk).slice(0,2) + ":" + String(tk).slice(2);
-    data[key].push({name: name.split("(")[0].trim(), jo, time: tLabel});
-  });
-  return resp({ok:true, data});
-}
-
-function getMine(fullName) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("예약현황");
-  const rows = sheet.getDataRange().getValues().slice(1);
-  const selections = {};
-  rows.forEach(([name, dk, tk]) => {
-    if (name !== fullName) return;
-    const key = String(dk).padStart(4,"0") + "_" + String(tk).padStart(4,"0");
-    selections[key] = "O";
-  });
-  return resp({ok:true, selections});
-}
-
-function submitBooking(body) {
-  const {name, dept, selections} = body;
-  const fullName = name + " (" + dept + ")";
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("예약현황");
-  const now = new Date().toLocaleString("ko-KR");
-  Object.entries(selections).forEach(([k, v]) => {
-    if (v !== "O") return;
-    const [dk, tk] = k.split("_");
-    sheet.appendRow([fullName, dk, tk, dept, now]);
-  });
-  return resp({ok:true});
-}
-
-function deleteBooking(body) {
-  const {name, dept, keys} = body;
-  const fullName = name + " (" + dept + ")";
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("예약현황");
-  const rows = sheet.getDataRange().getValues();
-  const toDelete = [];
-  rows.forEach((row, i) => {
-    if (i === 0) return;
-    const [rName, dk, tk] = row;
-    const key = String(dk).padStart(4,"0") + "_" + String(tk).padStart(4,"0");
-    if (rName === fullName && keys.includes(key)) toDelete.push(i + 1);
-  });
-  toDelete.reverse().forEach(r => sheet.deleteRow(r));
-  return resp({ok:true});
-}
-
-// ★ 전체 초기화 — 관리자 전용 (adminKey 필수)
-const ADMIN_KEY = "여기에_관리자_비밀키_설정"; // 예: "admin1234"
-
-function clearAllBookings(body) {
-  if (body.adminKey !== ADMIN_KEY) {
-    return resp({ok:false, message:"관리자 인증 실패"});
-  }
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("예약현황");
-  const lastRow = sheet.getLastRow();
-  if (lastRow > 1) {
-    sheet.deleteRows(2, lastRow - 1); // 헤더(1행) 제외 전체 삭제
-  }
-  return resp({ok:true, message:"전체 초기화 완료 (" + (lastRow - 1) + "건 삭제)"});
-}
-
-function resp(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-3. 배포:
-   - 배포 → 새 배포 → 웹앱
-   - 실행 계정: 본인
-   - 액세스 권한: 모든 사용자
-   - URL을 복사하여 SERVER_CONFIG.GAS_URL 에 붙여넣기
-
-=================================================================
-  테스트 코드 (Test.gs) — GAS 편집기에서 직접 실행
-  Apps Script 메뉴: 실행 → 함수 선택 후 ▶ 실행
-=================================================================
-
-// ── 테스트 헬퍼 ──────────────────────────────────────
-let _pass = 0, _fail = 0;
-
-function assert(label, condition, detail) {
-  if (condition) {
-    Logger.log("  ✅ PASS : " + label);
-    _pass++;
-  } else {
-    Logger.log("  ❌ FAIL : " + label + (detail ? " → " + detail : ""));
-    _fail++;
-  }
-}
-
-function resetCounters() { _pass = 0; _fail = 0; }
-
-function summary(suiteName) {
-  Logger.log("─────────────────────────────────────────");
-  Logger.log(suiteName + " 결과: " + _pass + " 통과 / " + _fail + " 실패");
-  Logger.log("─────────────────────────────────────────");
-}
-
-// 시트 초기화 (헤더 포함 새로 작성)
-function _resetSheet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName("예약현황");
-  if (!sheet) sheet = ss.insertSheet("예약현황");
-  sheet.clearContents();
-  sheet.appendRow(["이름(조포함)", "날짜키", "시간키", "조", "제출일시"]);
-  return sheet;
-}
-
-// ── 단위 테스트 ────────────────────────────────────────
-
-// [1] 제출 테스트
-function test_submit() {
-  resetCounters();
-  Logger.log("▶ [1] submitBooking 테스트");
-  _resetSheet();
-
-  const body = {
-    name: "테스트유저",
-    dept: "1조",
-    selections: { "0507_1400": "O", "0507_1430": "O", "0508_0900": "O" }
-  };
-  const result = JSON.parse(submitBooking(body).getContent());
-
-  assert("ok 반환", result.ok === true);
-
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("예약현황");
-  const rows = sheet.getDataRange().getValues().slice(1);
-  assert("행 3개 삽입", rows.length === 3, "실제: " + rows.length);
-  assert("이름 형식", rows[0][0] === "테스트유저 (1조)", "실제: " + rows[0][0]);
-  assert("날짜키 저장", rows[0][1] === "0507", "실제: " + rows[0][1]);
-  assert("시간키 저장", rows[0][2] === "1400", "실제: " + rows[0][2]);
-
-  summary("[1] submitBooking");
-}
-
-// [2] getAll 테스트
-function test_getAll() {
-  resetCounters();
-  Logger.log("▶ [2] getAll 테스트");
-  _resetSheet();
-
-  // 사전 데이터 삽입
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("예약현황");
-  sheet.appendRow(["홍길동 (3조)", "0507", "1400", "3조", "2026-05-04"]);
-  sheet.appendRow(["김민준 (2조)", "0511", "0900", "2조", "2026-05-04"]);
-  sheet.appendRow(["홍길동 (3조)", "0507", "1430", "3조", "2026-05-04"]);
-
-  const result = JSON.parse(getAll().getContent());
-
-  assert("ok 반환", result.ok === true);
-  assert("0507_1400 키 존재", !!result.data["0507_1400"]);
-  assert("0507_1400 예약자명", result.data["0507_1400"][0].name === "홍길동", "실제: " + result.data["0507_1400"][0].name);
-  assert("0511_0900 키 존재", !!result.data["0511_0900"]);
-  assert("0507_1430 키 존재", !!result.data["0507_1430"]);
-
-  summary("[2] getAll");
-}
-
-// [3] getMine 테스트
-function test_getMine() {
-  resetCounters();
-  Logger.log("▶ [3] getMine 테스트");
-  _resetSheet();
-
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("예약현황");
-  sheet.appendRow(["이서연 (5조)", "0513", "1400", "5조", "2026-05-04"]);
-  sheet.appendRow(["이서연 (5조)", "0513", "1430", "5조", "2026-05-04"]);
-  sheet.appendRow(["박지호 (1조)", "0514", "1100", "1조", "2026-05-04"]);
-
-  const result = JSON.parse(getMine("이서연 (5조)").getContent());
-
-  assert("ok 반환", result.ok === true);
-  assert("0513_1400 존재", result.selections["0513_1400"] === "O");
-  assert("0513_1430 존재", result.selections["0513_1430"] === "O");
-  assert("타인 데이터 미포함", !result.selections["0514_1100"]);
-  const cnt = Object.keys(result.selections).length;
-  assert("총 2건", cnt === 2, "실제: " + cnt);
-
-  summary("[3] getMine");
-}
-
-// [4] deleteBooking 테스트
-function test_deleteBooking() {
-  resetCounters();
-  Logger.log("▶ [4] deleteBooking 테스트");
-  _resetSheet();
-
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("예약현황");
-  sheet.appendRow(["한승우 (9조)", "0527", "1300", "9조", "2026-05-04"]);
-  sheet.appendRow(["한승우 (9조)", "0527", "1330", "9조", "2026-05-04"]);
-  sheet.appendRow(["오채원 (6조)", "0528", "1600", "6조", "2026-05-04"]);
-
-  const body = { name:"한승우", dept:"9조", keys:["0527_1300", "0527_1330"] };
-  const result = JSON.parse(deleteBooking(body).getContent());
-
-  assert("ok 반환", result.ok === true);
-
-  const rows = sheet.getDataRange().getValues().slice(1);
-  assert("삭제 후 1행 남음", rows.length === 1, "실제: " + rows.length);
-  assert("오채원 데이터 보존", rows[0][0] === "오채원 (6조)", "실제: " + rows[0][0]);
-
-  summary("[4] deleteBooking");
-}
-
-// [5] clearAllBookings 테스트
-function test_clearAll() {
-  resetCounters();
-  Logger.log("▶ [5] clearAllBookings 테스트");
-  _resetSheet();
-
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("예약현황");
-  sheet.appendRow(["홍길동 (3조)", "0507", "1400", "3조", "2026-05-04"]);
-  sheet.appendRow(["김민준 (2조)", "0511", "0900", "2조", "2026-05-04"]);
-
-  // 잘못된 키 테스트
-  const failResult = JSON.parse(clearAllBookings({adminKey:"wrongkey"}).getContent());
-  assert("잘못된 키 거부", failResult.ok === false);
-  assert("인증 실패 메시지", failResult.message === "관리자 인증 실패");
-
-  // 올바른 키 테스트
-  const okResult = JSON.parse(clearAllBookings({adminKey: ADMIN_KEY}).getContent());
-  assert("ok 반환", okResult.ok === true);
-
-  const rows = sheet.getDataRange().getValues().slice(1);
-  assert("데이터 전체 삭제", rows.length === 0, "실제: " + rows.length);
-
-  // 헤더 보존 확인
-  const header = sheet.getRange(1,1).getValue();
-  assert("헤더 보존", header === "이름(조포함)", "실제: " + header);
-
-  summary("[5] clearAllBookings");
-}
-
-// [6] 중복 제출 방지 테스트 (동일인 동일 슬롯 재제출)
-function test_duplicateSubmit() {
-  resetCounters();
-  Logger.log("▶ [6] 중복 제출 테스트");
-  _resetSheet();
-
-  const body = { name:"중복테스트", dept:"2조", selections:{"0520_1000":"O"} };
-  submitBooking(body);
-  submitBooking(body); // 동일 데이터 재제출
-
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("예약현황");
-  const rows = sheet.getDataRange().getValues().slice(1);
-  // 현재 GAS 구현은 중복 체크 없이 appendRow → 2행이 들어감
-  // 이 테스트로 중복 허용 여부를 확인 (향후 개선 포인트 문서화)
-  Logger.log("  ℹ 중복 제출 시 행 수: " + rows.length + " (현재 중복 체크 없음 — 필요 시 개선 필요)");
-  assert("중복 미차단 확인(현재 스펙)", rows.length === 2, "실제: " + rows.length);
-
-  summary("[6] 중복 제출");
-}
-
-// [7] 빈 시트 getAll 테스트
-function test_emptySheet() {
-  resetCounters();
-  Logger.log("▶ [7] 빈 시트 getAll 테스트");
-  _resetSheet();
-
-  const result = JSON.parse(getAll().getContent());
-  assert("ok 반환", result.ok === true);
-  assert("data 빈 객체", Object.keys(result.data).length === 0);
-
-  summary("[7] 빈 시트");
-}
-
-// ── 전체 테스트 일괄 실행 ─────────────────────────────
-function runAllTests() {
-  Logger.log("=════════════════════════════════════════");
-  Logger.log("  사무실 예약 GAS 전체 테스트 시작");
-  Logger.log("=════════════════════════════════════════");
-  let totalPass = 0, totalFail = 0;
-
-  const suites = [
-    test_submit,
-    test_getAll,
-    test_getMine,
-    test_deleteBooking,
-    test_clearAll,
-    test_duplicateSubmit,
-    test_emptySheet,
-  ];
-
-  suites.forEach(fn => {
-    resetCounters();
-    fn();
-    totalPass += _pass;
-    totalFail += _fail;
-  });
-
-  Logger.log("=════════════════════════════════════════");
-  Logger.log("  최종: " + totalPass + " 통과 / " + totalFail + " 실패");
-  if (totalFail === 0) Logger.log("  🎉 모든 테스트 통과!");
-  else Logger.log("  ⚠ " + totalFail + "개 실패 — 로그 확인 요망");
-  Logger.log("=════════════════════════════════════════");
-
-  // 테스트 후 시트 복원
-  _resetSheet();
-}
-
+  GAS 백엔드 코드는 별도 파일 Code.gs 참고
+  (이 파일 안에 있던 옛 가이드/테스트 코드는 admin.html이 쓰는
+   adminDelete / adminUpdate 액션이 빠져 있어 최신 버전으로 분리함)
 =================================================================
 -->
 </body>
