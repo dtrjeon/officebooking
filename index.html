@@ -26,7 +26,7 @@
   html { height:-webkit-fill-available; }
 
   .header { position:relative; text-align:center; padding:28px 16px 18px; border-bottom:1px solid var(--border); background:linear-gradient(180deg,#e8eef8,var(--paper)); }
-  .admin-key-btn { position:absolute; top:14px; right:14px; font-size:20px; line-height:1; text-decoration:none; padding:7px 9px; border-radius:8px; color:var(--ink); opacity:.65; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+  .admin-key-btn { position:absolute; top:46px; right:14px; font-size:20px; line-height:1; text-decoration:none; padding:7px 9px; border-radius:8px; color:var(--ink); opacity:.65; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
   .admin-key-btn:hover, .admin-key-btn:active { opacity:1; background:rgba(0,0,0,.06); }
   .header-deco { font-size:11px; color:var(--accent); margin-bottom:10px; letter-spacing:6px; }
   .header h1 { font-size:18px; font-weight:700; margin-bottom:4px; }
@@ -539,7 +539,8 @@ function findDateByKey(dateKey) {
 /* ── 개별 30분 슬롯 단위 예약불가 규칙 ── */
 function isSlotBlocked(dateType, hourKey, slotKey) {
   const h = parseInt(String(slotKey).slice(0, 2), 10);
-  if (dateType === "sunday"   && hourKey === "pm" && h >= 14) return true; // 주일 오후 14시 이후
+  if (dateType === "sunday"   && hourKey === "pm" && h >= 14) return true;        // 주일 오후 14시 이후
+  if (dateType === "sunday"   && hourKey === "pm" && slotKey === "1330") return true; // 주일 13:30
   if (dateType === "saturday" && hourKey === "pm" && slotKey === "1330") return true; // 토요일 13:30
   return false;
 }
