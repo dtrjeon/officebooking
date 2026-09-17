@@ -500,7 +500,22 @@ function normalizeDeptDirect(input) {
   input.value = v;
 }
 
-// 조 직접입력 토글
+// 조별 명단 (맨 앞 이름 = 조장, 예약자명 자동입력용)
+const DEPT_MEMBERS = {
+  "1조": ["성기현","최정화","김소형"],
+  "2조": ["이지영","신대용","이지연"],
+  "3조": ["안희정","김진우","안혜경"],
+  "4조": ["신명순","정현주","최창숙"],
+  "5조": ["임원기","박길순","김재진"],
+  "6조": ["김성현","이나경","조은진"],
+  "7조": ["배현주","김정옥","박정인"],
+  "8조": ["박희철","송유미","구도영"],
+  "9조": ["임주현","김용대","이숙희"],
+  "10조": ["이미경","김희정","원준환"],
+  "11조": ["이선영","강동우","방봉미"]
+};
+
+// 조 직접입력 토글 + 조 선택 시 예약자명 자동입력(비어있을 때만)
 function handleDeptChange(val) {
   const direct = document.getElementById("deptDirectInput");
   if (val === "__direct__") {
@@ -509,9 +524,15 @@ function handleDeptChange(val) {
   } else {
     direct.style.display = "none";
   }
+  const members = DEPT_MEMBERS[val];
+  const nameEl = document.getElementById("nameInput");
+  if (members && !nameEl.value.trim()) {
+    nameEl.value = members[0];
+    nameEl.classList.remove("error");
+  }
 }
 
-// 팝업 내 조 직접입력 토글
+// 팝업 내 조 직접입력 토글 + 조 선택 시 예약자명 자동입력(비어있을 때만)
 function handleModalDeptChange(val) {
   const direct = document.getElementById("modalDeptDirectInput");
   if (val === "__direct__") {
@@ -519,6 +540,12 @@ function handleModalDeptChange(val) {
     direct.focus();
   } else {
     direct.style.display = "none";
+  }
+  const members = DEPT_MEMBERS[val];
+  const nameEl = document.getElementById("modalNameInput");
+  if (members && nameEl && !nameEl.value.trim()) {
+    nameEl.value = members[0];
+    nameEl.style.borderColor = "";
   }
 }
 
