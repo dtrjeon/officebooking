@@ -38,7 +38,9 @@
   .input-section { padding:14px 16px; background:var(--parchment); border-bottom:1px solid var(--border); }
   .input-row { display:flex; gap:10px; }
   .input-group { flex:1; display:flex; flex-direction:column; gap:4px; }
-  .input-group label { font-size:13px; font-weight:500; color:var(--muted); }
+  .input-group label { font-size:13px; font-weight:500; color:var(--muted); display:flex; align-items:center; gap:4px; }
+  .field-reset-btn { border:none; background:none; padding:2px; margin:0; line-height:1; font-size:14px; color:var(--muted); cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+  .field-reset-btn:active { color:var(--accent); }
   .input-group input, .input-group select { width:100%; padding:11px 12px; border:1.5px solid var(--border); border-radius:var(--radius); font-family:var(--font); font-size:16px; background:white; color:var(--ink); outline:none; -webkit-appearance:none; appearance:none; }
   .input-group input:focus, .input-group select:focus { border-color:var(--accent); }
   .input-group input.error, .input-group select.error { border-color:#c0392b; }
@@ -174,7 +176,7 @@
       </div>
     </div>
     <div class="input-group">
-      <label>조 <span style="color:#c0392b">*</span></label>
+      <label>조 <span style="color:#c0392b">*</span><button type="button" class="field-reset-btn" onclick="resetDeptFields()" title="이름/반/조 초기화">↺</button></label>
       <div class="select-wrap" id="deptSelectWrap">
         <select id="deptInput" onchange="handleDeptChange(this.value)">
           <option value="">-- 선택 --</option>
@@ -498,6 +500,17 @@ function normalizeDeptDirect(input) {
   // 숫자만 있으면 "조" 붙이기
   if (/^\d+$/.test(v)) v = v + "조";
   input.value = v;
+}
+
+// 조 옆 초기화 아이콘: 이름/반/조 초기화
+function resetDeptFields() {
+  document.getElementById("nameInput").value = "";
+  document.getElementById("nameInput").classList.remove("error");
+  document.getElementById("banInput").value = "수주반";
+  document.getElementById("deptInput").value = "";
+  document.getElementById("deptInput").classList.remove("error");
+  document.getElementById("deptDirectInput").style.display = "none";
+  document.getElementById("deptDirectInput").value = "";
 }
 
 // 조별 명단 (맨 앞 이름 = 조장, 예약자명 자동입력용)
